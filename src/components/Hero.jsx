@@ -33,8 +33,9 @@ function Hero() {
     const passwordref = useRef(null)
 
   return (
-    <main className='h-screen w-screen flex flex-col gap-12 items-center justify-center'>
-    <h1 className='text-5xl text-zinc-300'>Random password generator</h1>
+    <div >
+    <main className='h-screen w-screen flex flex-col gap-12 items-center justify-center bg-white dark:bg-black'>
+    <h1 className='text-5xl text-black dark:text-zinc-300 '>Random password generator</h1>
     <div className='flex flex-col gap-3'>
     <div className=' flex gap-3'>
     <input type="text"
@@ -53,14 +54,15 @@ function Hero() {
       ref={passwordref}
       onChange={(e)=>{setlength(e.target.value)}}
       id="length" className='cursor-grab accent-zinc-300' />
-      <label htmlFor="length" className='text-lg ml-1'>Length({length})</label>
+      <label htmlFor="length" className='text-lg ml-1 text-black dark:text-zinc-300'>Length({length})</label>
       <input type="checkbox" name="numbers" defaultChecked={numallow} onChange={(e)=>{setnumberallow((prev)=>!prev)}} id="numbers" className='ml-4 mt-1 cursor-pointer accent-zinc-300' />
-      <label htmlFor="numbers" className='text-lg ml-1'>Numbers</label>
+      <label htmlFor="numbers" className='text-lg ml-1 text-black dark:text-zinc-300'>Numbers</label>
       <input type="checkbox" name="Symbols" id="Symbols" defaultChecked={charallow} onChange={(e)=>{setcarallow((prev)=>!prev)}} className='ml-4 mt-1 cursor-pointer accent-zinc-300' />
-      <label htmlFor="Symbols" className='text-lg ml-1'>Symbols</label>
+      <label htmlFor="Symbols" className='text-lg ml-1 text-black dark:text-zinc-300'>Symbols</label>
     </div>
     </div>
     </main>
+    </div>
   )
 }
 
