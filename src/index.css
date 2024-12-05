@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 *{
-  @apply transition-colors duration-300
+  @apply transition-colors duration-200
 }
 
 :root {
@@ -21,8 +21,5 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
 }
 
