@@ -86,9 +86,9 @@ function Hero() {
 
   return (
     <div >
-    <main className='h-screen w-screen flex flex-col gap-12 items-center justify-center bg-white dark:bg-black'>
+    <main className='min-h-screen pt-7 w-screen flex flex-col gap-12 items-center justify-center bg-white dark:bg-black'>
     <h1 className='text-4xl text-center sm:text-5xl text-black dark:text-zinc-300 '>Random password generator</h1>
-    <div className='flex items-center gap-5'>
+    <div className='flex flex-col sm:flex-row items-center gap-5'>
     <div className='flex flex-col items-center gap-3'>
     <div className=' flex gap-3 pb-1'>
     <input type="text"
