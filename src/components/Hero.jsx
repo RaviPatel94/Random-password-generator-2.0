@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
-import {QRCodeSVG} from "qrcode"
+import QRCode from 'react-qr-code';
+import { toPng } from "html-to-image";
+
 
 function Hero() {
 
@@ -10,6 +12,7 @@ function Hero() {
     const [charonly, setcaronly]=useState(false)
     const [password, setpassword]=useState("")
     const [copystatus,setcopy]=useState("Copy")
+    const [qrcode,genqrcode]=useState("")
 
     const handlecopy=()=>{
       setcopy("Copied")
@@ -44,12 +47,48 @@ function Hero() {
     [length, numallow, charallow,numonly, charonly, passwordgen]
     )
 
-    const passwordref = useRef(null)
+    const passwordref = useRef(null);
+
+    function generateqr(){
+      console.log(password)
+      genqrcode(
+      <div className=' flex flex-col gap-4 items-center justify-center'>
+      <div ref={qrRef} className='p-1 bg-white'>
+      <QRCode
+      value={password}
+      type='string'
+      size={200}
+      />
+      </div>
+      <button 
+      className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white'
+      onClick={downloadQRCode}
+      >Download QR</button>
+      </div>
+      )
+    }
+
+    const qrRef = useRef();
+
+    const downloadQRCode = async () => {
+      if (!qrRef.current) return;
+  
+      try {
+        const dataUrl = await toPng(qrRef.current);
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = "qr-code.png";
+        link.click();
+      } catch (err) {
+        console.error("Failed to download QR code:", err);
+      }
+    };
 
   return (
     <div >
     <main className='h-screen w-screen flex flex-col gap-12 items-center justify-center bg-white dark:bg-black'>
     <h1 className='text-4xl text-center sm:text-5xl text-black dark:text-zinc-300 '>Random password generator</h1>
+    <div className='flex items-center gap-5'>
     <div className='flex flex-col items-center gap-3'>
     <div className=' flex gap-3 pb-1'>
     <input type="text"
@@ -86,9 +125,13 @@ function Hero() {
       <label htmlFor="Symbolsonly" className='text-lg ml-1 text-black dark:text-zinc-300'>Symbols only</label>
       </div>
       <div>
-        <button className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black  ' >QR Code</button>
+        <button className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white '
+        onClick={generateqr}
+        >QR Code</button>
       </div>
       </div>
+    </div>
+    {qrcode}
     </div>
     </main>
     </div>
