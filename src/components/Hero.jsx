@@ -13,6 +13,9 @@ function Hero() {
     const [password, setpassword]=useState("")
     const [copystatus,setcopy]=useState("Copy")
     const [qrcode,genqrcode]=useState("")
+    const [strength, setstrength] = useState("weak")
+    const [dqr, setdqr] = useState(false)
+    const timeref=useRef(0)
 
     const handlecopy=()=>{
       setcopy("Copied")
@@ -20,6 +23,24 @@ function Hero() {
     useEffect(()=>{
       setcopy("Copy")
     },[length, numallow, charallow, charonly, numonly, setpassword])
+
+    const checkPasswordStrength = (password) => {
+      let score = 0;
+      
+      if (password.length >= 8) score += 1;
+      if (password.length >= 12) score += 1;
+      if (password.length >= 16) score += 1;
+
+      if (/[0-9]/.test(password)) score += 1;
+      if (/[a-z]/.test(password)) score += 1;
+      if (/[A-Z]/.test(password)) score += 1;
+      if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+
+      if (score <= 2) return "WEAK";
+      if (score <= 4) return "MEDIUM";
+      if (score <= 6) return "STRONG";
+      return "VERY STRONG";
+  }
 
     const passwordgen=useCallback(()=>{
         let pass=""
@@ -35,6 +56,7 @@ function Hero() {
             pass+=str.charAt(char)
         }
         setpassword(pass)
+        setstrength(checkPasswordStrength(pass))
 
     },[length, numallow, charallow,numonly, charonly, setpassword])
 
@@ -50,22 +72,30 @@ function Hero() {
     const passwordref = useRef(null);
 
     function generateqr(){
-      console.log(password)
-      genqrcode(
-      <div className=' flex flex-col gap-4 items-center justify-center'>
-      <div ref={qrRef} className='p-1 bg-white'>
-      <QRCode
-      value={password}
-      type='string'
-      size={200}
-      />
-      </div>
-      <button 
-      className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white'
-      onClick={downloadQRCode}
-      >Download QR</button>
-      </div>
-      )
+      console.log(timeref.current)
+      if (timeref.current===0) {
+        setdqr(true)
+        timeref.current++
+        genqrcode(
+          <div className=' flex flex-col gap-4 items-center justify-center'>
+          <div ref={qrRef} className='p-1 bg-white'>
+          <QRCode
+          value={password}
+          type='string'
+          size={200}
+          />
+          </div>
+          <button 
+          className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white'
+          onClick={downloadQRCode}
+          >Download QR</button>
+          </div>
+          )
+      }else{
+        setdqr(false)
+        timeref.current=0
+        generateqr(" ")
+      }
     }
 
     const qrRef = useRef();
@@ -116,6 +146,7 @@ function Hero() {
       <input type="checkbox" name="Symbols" id="Symbols" defaultChecked={charallow} onChange={(e)=>{setcarallow((prev)=>!prev)}} className=' size-4 ml-4 mt-1 cursor-pointer accent-zinc-300' />
       <label htmlFor="Symbols" className='text-lg ml-1 text-black dark:text-zinc-300'>Symbols</label>
       </div>
+      <div className='text-lg ml-1 text-black dark:text-zinc-300 underline' >{strength}</div>
     </div>
     <div className='flex gap-3 flex-col items-center sm:flex-row' >
       <div className='flex items-center'>
@@ -127,7 +158,7 @@ function Hero() {
       <div>
         <button className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white '
         onClick={generateqr}
-        >QR Code</button>
+        >{dqr?"Hide QR":"QR Code"}</button>
       </div>
       </div>
     </div>
