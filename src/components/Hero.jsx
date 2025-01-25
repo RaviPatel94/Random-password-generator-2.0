@@ -12,10 +12,8 @@ function Hero() {
     const [charonly, setcaronly]=useState(false)
     const [password, setpassword]=useState("")
     const [copystatus,setcopy]=useState("Copy")
-    const [qrcode,genqrcode]=useState("")
     const [strength, setstrength] = useState("weak")
     const [dqr, setdqr] = useState(false)
-    const timeref=useRef(0)
 
     const handlecopy=()=>{
       setcopy("Copied")
@@ -71,33 +69,6 @@ function Hero() {
 
     const passwordref = useRef(null);
 
-    function generateqr(){
-      console.log(timeref.current)
-      if (timeref.current===0) {
-        setdqr(true)
-        timeref.current++
-        genqrcode(
-          <div className=' flex flex-col gap-4 items-center justify-center'>
-          <div ref={qrRef} className='p-1 bg-white'>
-          <QRCode
-          value={password}
-          type='string'
-          size={200}
-          />
-          </div>
-          <button 
-          className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white'
-          onClick={downloadQRCode}
-          >Download QR</button>
-          </div>
-          )
-      }else{
-        setdqr(false)
-        timeref.current=0
-        generateqr(" ")
-      }
-    }
-
     const qrRef = useRef();
 
     const downloadQRCode = async () => {
@@ -128,6 +99,7 @@ function Hero() {
     <button 
     onClick={()=>{copypass(); handlecopy();}}
     className='h-9 bg-zinc-300 text-black active:bg-black active:text-zinc-300'>{copystatus}</button>
+    <input type="number" placeholder='Enter Key' className='h-9 w-7 px-1 text-zinc-300 bg-black outline-none border border-zinc-300 rounded-lg ' id="" />
     </div>
     <div className='flex flex-col sm:flex-row items-center justify-center gap-2'>
       <div className='flex'>
@@ -155,14 +127,29 @@ function Hero() {
       <input type="checkbox" name="Symbolsonly" id="Symbolsonly" defaultChecked={charonly} onChange={(e)=>{setcaronly((prev)=>!prev)}} className=' size-4 ml-4 mt-1 cursor-pointer accent-zinc-300' />
       <label htmlFor="Symbolsonly" className='text-lg ml-1 text-black dark:text-zinc-300'>Symbols only</label>
       </div>
-      <div>
+      <div className='flex gap-3'>
         <button className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white '
-        onClick={generateqr}
+        onClick={()=>setdqr(prev=>!prev)}
         >{dqr?"Hide QR":"QR Code"}</button>
+        <button className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white '
+        onClick={()=>setdqr(prev=>!prev)}
+        >{dqr?"Normal":"Encrypt"}</button>
       </div>
       </div>
     </div>
-    {qrcode}
+    <div className={` flex-col gap-4 items-center justify-center ${dqr?"flex":"hidden"}`} >
+          <div ref={qrRef} className='p-1 bg-white'>
+          <QRCode
+          value={password}
+          type='string'
+          size={200}
+          />
+          </div>
+          <button 
+          className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white'
+          onClick={downloadQRCode}
+          >Download QR</button>
+          </div>
     </div>
     </main>
     </div>
