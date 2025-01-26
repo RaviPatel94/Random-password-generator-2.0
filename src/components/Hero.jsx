@@ -2,22 +2,57 @@ import React, { useState, useCallback, useEffect, useRef } from 'react'
 import QRCode from 'react-qr-code';
 import { toPng } from "html-to-image";
 
-
 function Hero() {
-
     const [length,setlength]=useState(8);
     const [numallow,setnumberallow]=useState(false);
     const [numonly,setnumberonly]=useState(false);
     const [charallow, setcarallow]=useState(false)
     const [charonly, setcaronly]=useState(false)
     const [password, setpassword]=useState("")
+    const [encryptedPassword, setEncryptedPassword] = useState("")
     const [copystatus,setcopy]=useState("Copy")
     const [strength, setstrength] = useState("weak")
     const [dqr, setdqr] = useState(false)
+    const [key, setkey] = useState(23)
+    const [encrypt, setencrypt] = useState(false)
+    const [encryptType, setEncryptType] = useState("additive")
+
+    const additiveEncrypt = (text, shift) => {
+        return text.split('').map(char => {
+            if (!char.match(/[a-zA-Z]/)) return char;
+            const base = char.toLowerCase() === char ? 'a' : 'A';
+            return String.fromCharCode(
+                ((char.charCodeAt(0) - base.charCodeAt(0) + shift + 26) % 26) + base.charCodeAt(0)
+            );
+        }).join('');
+    };
+
+    const multiplicativeEncrypt = (text, k) => {
+        return text.split('').map(char => {
+            if (!char.match(/[a-zA-Z]/)) return char;
+            const base = char.toLowerCase() === char ? 'a' : 'A';
+            const x = char.charCodeAt(0) - base.charCodeAt(0);
+            return String.fromCharCode(
+                ((k * x) % 26) + base.charCodeAt(0)
+            );
+        }).join('');
+    };
+
+    const affineEncrypt = (text, a, b) => {
+        return text.split('').map(char => {
+            if (!char.match(/[a-zA-Z]/)) return char;
+            const base = char.toLowerCase() === char ? 'a' : 'A';
+            const x = char.charCodeAt(0) - base.charCodeAt(0);
+            return String.fromCharCode(
+                ((a * x + b) % 26) + base.charCodeAt(0)
+            );
+        }).join('');
+    };
 
     const handlecopy=()=>{
       setcopy("Copied")
     }
+
     useEffect(()=>{
       setcopy("Copy")
     },[length, numallow, charallow, charonly, numonly, setpassword])
@@ -53,10 +88,30 @@ function Hero() {
             let char=Math.floor(Math.random()*str.length+1)
             pass+=str.charAt(char)
         }
-        setpassword(pass)
-        setstrength(checkPasswordStrength(pass))
+        
+        let finalPassword = pass;
+        let finalEncryptedPassword = pass;
+        if (encrypt) {
+            switch(encryptType) {
+                case "additive":
+                    finalEncryptedPassword = additiveEncrypt(pass, key);
+                    break;
+                case "multiplicative":
+                    finalEncryptedPassword = multiplicativeEncrypt(pass, key);
+                    break;
+                case "affine":
+                    finalEncryptedPassword = affineEncrypt(pass, key, 7);
+                    break;
+                default:
+                    finalEncryptedPassword = pass;
+            }
+        }
 
-    },[length, numallow, charallow,numonly, charonly, setpassword])
+        setpassword(finalPassword)
+        setEncryptedPassword(finalEncryptedPassword)
+        setstrength(checkPasswordStrength(finalPassword))
+
+    },[length, numallow, charallow,numonly, charonly, encrypt, encryptType, key, setpassword])
 
     const copypass=()=>{
         passwordref.current?.select()
@@ -68,7 +123,6 @@ function Hero() {
     )
 
     const passwordref = useRef(null);
-
     const qrRef = useRef();
 
     const downloadQRCode = async () => {
@@ -87,7 +141,7 @@ function Hero() {
 
   return (
     <div >
-    <main className='min-h-screen pt-7 w-screen flex flex-col gap-12 items-center justify-center bg-white dark:bg-black'>
+    <main className='min-h-screen py-20 w-screen flex flex-col gap-12 items-center justify-center bg-white dark:bg-black'>
     <h1 className='text-4xl text-center sm:text-5xl text-black dark:text-zinc-300 '>Random password generator</h1>
     <div className='flex flex-col sm:flex-row items-center gap-5'>
     <div className='flex flex-col items-center gap-3'>
@@ -99,8 +153,21 @@ function Hero() {
     <button 
     onClick={()=>{copypass(); handlecopy();}}
     className='h-9 bg-zinc-300 text-black active:bg-black active:text-zinc-300'>{copystatus}</button>
-    <input type="number" placeholder='Enter Key' className='h-9 w-7 px-1 text-zinc-300 bg-black outline-none border border-zinc-300 rounded-lg ' id="" />
     </div>
+    {encrypt && (
+        <div className=' flex gap-3 pb-1'>
+        <input type="text"
+         value={encryptedPassword}
+         readOnly
+         className='bg-zinc-200 rounded-md h-9 w-60 sm:w-80 text-black text-lg outline-none pl-2 selection:bg-black selection:text-white'/>
+        <button 
+        onClick={()=>{
+            navigator.clipboard.writeText(encryptedPassword);
+            handlecopy();
+        }}
+        className='h-9 bg-zinc-300 text-black active:bg-black active:text-zinc-300'>{copystatus}</button>
+        </div>
+    )}
     <div className='flex flex-col sm:flex-row items-center justify-center gap-2'>
       <div className='flex'>
       <input type="range" name='length' 
@@ -112,14 +179,15 @@ function Hero() {
       id="length" className=' w-44 sm:w-32 cursor-grab accent-zinc-300' />
       <label htmlFor="length" className='text-lg ml-1 text-black dark:text-zinc-300'>Length({length})</label>
       </div>
-      <div >
+      <div className='flex ' >
       <input type="checkbox" name="numbers" defaultChecked={numallow} onChange={(e)=>{setnumberallow((prev)=>!prev)}} id="numbers" className=' size-4 ml-4 mt-1 cursor-pointer accent-zinc-300' />
       <label htmlFor="numbers" className=' text-lg ml-1 text-black dark:text-zinc-300'>Numbers</label>
       <input type="checkbox" name="Symbols" id="Symbols" defaultChecked={charallow} onChange={(e)=>{setcarallow((prev)=>!prev)}} className=' size-4 ml-4 mt-1 cursor-pointer accent-zinc-300' />
       <label htmlFor="Symbols" className='text-lg ml-1 text-black dark:text-zinc-300'>Symbols</label>
+      <div className='text-lg ml-4 text-black dark:text-zinc-300 underline' >{strength}</div>
       </div>
-      <div className='text-lg ml-1 text-black dark:text-zinc-300 underline' >{strength}</div>
     </div>
+
     <div className='flex gap-3 flex-col items-center sm:flex-row' >
       <div className='flex items-center'>
       <input type="checkbox" name="numbersonly" defaultChecked={numonly} onChange={(e)=>{setnumberonly((prev)=>!prev)}} id="numbersonly" className=' size-4 ml-4 mt-1 cursor-pointer accent-zinc-300' />
@@ -132,10 +200,36 @@ function Hero() {
         onClick={()=>setdqr(prev=>!prev)}
         >{dqr?"Hide QR":"QR Code"}</button>
         <button className=' text-black bg-zinc-200 dark:text-white dark:bg-zinc-800  hover:border border-zinc-900 active:bg-zinc-700 active:text-zinc-100 dark:active:bg-white dark:active:text-black dark:hover:border-white '
-        onClick={()=>setdqr(prev=>!prev)}
-        >{dqr?"Normal":"Encrypt"}</button>
+        onClick={()=>setencrypt(prev=>!prev)}
+        >{encrypt?"Normal":"Encrypt"}</button>
       </div>
       </div>
+
+      <div className={`flex gap-3 text-lg ${encrypt?"":"hidden"} `}>
+        <div>
+        <label htmlFor="Type" className='dark:text-zinc-200 text-black'>Type : </label>
+        <select 
+            name="Type" 
+            value={encryptType}
+            onChange={(e) => setEncryptType(e.target.value)}
+            className='text-black dark:bg-zinc-800 bg-zinc-200 dark:text-white h-9 rounded-lg'
+        >
+          <option value="additive">Additive</option>
+          <option value="multiplicative">Multiplicative</option>
+          <option value="affine">Affine</option>
+        </select>
+        </div>
+        <div>
+        <label className='dark:text-zinc-200 text-black'>Key : </label>
+        <input 
+            type="number" 
+            value={key}
+            onChange={(e) => setkey(Number(e.target.value))}
+            className='h-9 w-16 px-1 text-black dark:bg-zinc-800 bg-zinc-200 dark:text-white outline-none rounded-lg'
+        />
+        </div>
+      </div>
+
     </div>
     <div className={` flex-col gap-4 items-center justify-center ${dqr?"flex":"hidden"}`} >
           <div ref={qrRef} className='p-1 bg-white'>
@@ -151,6 +245,7 @@ function Hero() {
           >Download QR</button>
           </div>
     </div>
+    
     </main>
     </div>
   )
