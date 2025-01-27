@@ -16,38 +16,31 @@ function Hero() {
     const [key, setkey] = useState(23)
     const [encrypt, setencrypt] = useState(false)
     const [encryptType, setEncryptType] = useState("additive")
+    const [str, setstr] = useState("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
-    const additiveEncrypt = (text, shift) => {
-        return text.split('').map(char => {
-            if (!char.match(/[a-zA-Z]/)) return char;
-            const base = char.toLowerCase() === char ? 'a' : 'A';
-            return String.fromCharCode(
-                ((char.charCodeAt(0) - base.charCodeAt(0) + shift + 26) % 26) + base.charCodeAt(0)
-            );
-        }).join('');
-    };
+    const additiveEncrypt = (text, shift, charSet) => {
+      console.log("charset" + charSet+ "key"+ key)
+      return text.split('').map(char => {
+          const index = charSet.indexOf(char);
+          if (index === -1) return char; 
+          return charSet[(index + shift + charSet.length) % charSet.length];
+      }).join('');
+  };
+  const multiplicativeEncrypt = (text, k, charSet) => {
+    return text.split('').map(char => {
+        const index = charSet.indexOf(char);
+        if (index === -1) return char;
+        return charSet[(k * index) % charSet.length];
+    }).join('');
+};
 
-    const multiplicativeEncrypt = (text, k) => {
-        return text.split('').map(char => {
-            if (!char.match(/[a-zA-Z]/)) return char;
-            const base = char.toLowerCase() === char ? 'a' : 'A';
-            const x = char.charCodeAt(0) - base.charCodeAt(0);
-            return String.fromCharCode(
-                ((k * x) % 26) + base.charCodeAt(0)
-            );
-        }).join('');
-    };
-
-    const affineEncrypt = (text, a, b) => {
-        return text.split('').map(char => {
-            if (!char.match(/[a-zA-Z]/)) return char;
-            const base = char.toLowerCase() === char ? 'a' : 'A';
-            const x = char.charCodeAt(0) - base.charCodeAt(0);
-            return String.fromCharCode(
-                ((a * x + b) % 26) + base.charCodeAt(0)
-            );
-        }).join('');
-    };
+const affineEncrypt = (text, a, b, charSet) => {
+    return text.split('').map(char => {
+        const index = charSet.indexOf(char);
+        if (index === -1) return char;
+        return charSet[((a * index + b) % charSet.length + charSet.length) % charSet.length];
+    }).join('');
+};
 
     const handlecopy=()=>{
       setcopy("Copied")
@@ -77,50 +70,52 @@ function Hero() {
 
     const passwordgen=useCallback(()=>{
         let pass=""
-        let str="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        if(numallow) str+="0123456789"
-        if(charallow) str+="!#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
-        if(numonly) {
-          str="0123456789"; }
-        if(charonly) {
-          str="!#$%&'()*+,-./:;<=>?@[\]^_`{|}~"; }
+        if(numallow) setstr(prev=>prev+="0123456789")
+        if(charallow) setstr(prev=>prev+="!#$%&'()*+,-./:;<=>?@[\]^_`{|}~")
+        if(numonly) setstr("0123456789") 
+        if(charonly) setstr("!#$%&'()*+,-./:;<=>?@[\]^_`{|}~") 
+        if(!numonly && !charonly ) setstr(prev=>prev+="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+          if(!numonly && !charonly && !charallow && !numallow) setstr(prev=>prev+="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
         for (let i = 1; i <= length; i++) {
             let char=Math.floor(Math.random()*str.length+1)
             pass+=str.charAt(char)
         }
         
-        let finalPassword = pass;
-        let finalEncryptedPassword = pass;
+        setpassword(pass)
+        setstrength(checkPasswordStrength(pass))
+
+
+    },[length, numallow, charallow,numonly,charonly,setstr])
+
+    const encryptPasswordOnly = useCallback(() => {
         if (encrypt) {
+            let finalEncryptedPassword;
             switch(encryptType) {
                 case "additive":
-                    finalEncryptedPassword = additiveEncrypt(pass, key);
+                    finalEncryptedPassword = additiveEncrypt(password, key, str);
                     break;
                 case "multiplicative":
-                    finalEncryptedPassword = multiplicativeEncrypt(pass, key);
+                    finalEncryptedPassword = multiplicativeEncrypt(password, key, str);
                     break;
                 case "affine":
-                    finalEncryptedPassword = affineEncrypt(pass, key, 7);
+                    finalEncryptedPassword = affineEncrypt(password, key, 7, str);
                     break;
                 default:
-                    finalEncryptedPassword = pass;
+                    finalEncryptedPassword = password;
             }
+            setEncryptedPassword(finalEncryptedPassword)
         }
+    }, [password, encrypt, encryptType, key])
 
-        setpassword(finalPassword)
-        setEncryptedPassword(finalEncryptedPassword)
-        setstrength(checkPasswordStrength(finalPassword))
+    useEffect(()=>{
+        passwordgen()
+    },[length, numallow, charallow,numonly, charonly, passwordgen])
 
-    },[length, numallow, charallow,numonly, charonly, encrypt, encryptType, key, setpassword])
-
-    const copypass=()=>{
-        passwordref.current?.select()
-        window.navigator.clipboard.writeText(password)
-    }
-
-    useEffect(()=>{passwordgen()},
-    [length, numallow, charallow,numonly, charonly, passwordgen]
-    )
+    useEffect(()=>{
+        if (encrypt) {
+            encryptPasswordOnly()
+        }
+    },[encrypt, encryptType, key, encryptPasswordOnly])
 
     const passwordref = useRef(null);
     const qrRef = useRef();
@@ -151,23 +146,12 @@ function Hero() {
      readOnly
      className='bg-zinc-300 rounded-md h-9 w-60 sm:w-80 text-black text-lg outline-none pl-2 selection:bg-black selection:text-white'/>
     <button 
-    onClick={()=>{copypass(); handlecopy();}}
+    onClick={()=>{
+        navigator.clipboard.writeText(password);
+        handlecopy();
+    }}
     className='h-9 bg-zinc-300 text-black active:bg-black active:text-zinc-300'>{copystatus}</button>
     </div>
-    {encrypt && (
-        <div className=' flex gap-3 pb-1'>
-        <input type="text"
-         value={encryptedPassword}
-         readOnly
-         className='bg-zinc-200 rounded-md h-9 w-60 sm:w-80 text-black text-lg outline-none pl-2 selection:bg-black selection:text-white'/>
-        <button 
-        onClick={()=>{
-            navigator.clipboard.writeText(encryptedPassword);
-            handlecopy();
-        }}
-        className='h-9 bg-zinc-300 text-black active:bg-black active:text-zinc-300'>{copystatus}</button>
-        </div>
-    )}
     <div className='flex flex-col sm:flex-row items-center justify-center gap-2'>
       <div className='flex'>
       <input type="range" name='length' 
@@ -228,6 +212,14 @@ function Hero() {
             className='h-9 w-16 px-1 text-black dark:bg-zinc-800 bg-zinc-200 dark:text-white outline-none rounded-lg'
         />
         </div>
+        {encrypt && (
+        <div className=' flex gap-3 pb-1'>
+        <input type="text"
+         value={encryptedPassword}
+         readOnly
+         className='bg-zinc-200 rounded-md h-9 w-60 sm:w-80 text-black text-lg outline-none pl-2 selection:bg-black selection:text-white'/>
+        </div>
+    )}
       </div>
 
     </div>
