@@ -37,3 +37,19 @@ input[type=number] {
 }
 }
 
+@layer utilities {
+  .scrollbar::-webkit-scrollbar {
+    width: 4px; 
+    height: 4px; 
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4b5563; 
+    border-radius: 10px;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #4b5563; /* Dark gray for hover */
+  }
+}
+
