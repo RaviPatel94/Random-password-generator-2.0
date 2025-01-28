@@ -73,6 +73,7 @@ function Hero() {
         if (/[a-z]/.test(password)) score += 1;
         if (/[A-Z]/.test(password)) score += 1;
         if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+        if (encrypt) score+=6
 
         if (score <= 2) return "WEAK";
         if (score <= 4) return "MEDIUM";
