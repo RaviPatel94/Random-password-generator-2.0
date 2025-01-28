@@ -17,8 +17,8 @@ function Hero() {
     const [key, setkey] = useState(23);
     const [encrypt, setencrypt] = useState(false);
     const [encryptType, setEncryptType] = useState("additive");
-
     const strRef = useRef("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+    const [qrtext, setqrtext] = useState(password)
 
     const additiveEncrypt = (text, shift, charSet) => {
         console.log("charset" + charSet + "key" + key);
@@ -28,6 +28,11 @@ function Hero() {
             return charSet[(index + shift + charSet.length) % charSet.length];
         }).join('');
     };
+
+    useEffect(()=>{
+        if (encrypt) setqrtext(`Encryption type = ${encryptType} , Key = ${key}, Orignal Password = ${password}, Encrypted Password = ${encryptedPassword}`)
+        else setqrtext(password)
+    },[encrypt,password,encryptedPassword])
 
     const multiplicativeEncrypt = (text, k, charSet) => {
         return text.split('').map(char => {
@@ -199,6 +204,7 @@ function Hero() {
                         </div>
 
                         <div className={`flex sm:flex-row flex-col gap-3 text-lg ${encrypt ? "" : "hidden"} `}>
+                            <div className='flex gap-2'>
                             <div>
                                 <label htmlFor="Type" className='dark:text-zinc-200 text-black'>Type : </label>
                                 <select
@@ -222,6 +228,7 @@ function Hero() {
                                     className='h-9 w-16 px-1 text-black dark:bg-zinc-800 bg-zinc-200 dark:text-white outline-none rounded-lg'
                                 />
                             </div>
+                            </div>
                             {encrypt && (
                                 <div className=' flex gap-3 pb-1 relative'>
                                     <input type="text"
@@ -242,7 +249,7 @@ function Hero() {
                     <div className={` flex-col gap-4 items-center justify-center ${dqr ? "flex" : "hidden"}`}>
                         <div ref={qrRef} className='p-1 bg-white'>
                             <QRCode
-                                value={`Encryption type = ${encryptType} , Key = ${key}, Orignal Password = ${password}, Encrypted Password = ${encryptedPassword}`}
+                                value={qrtext}
                                 type='string'
                                 size={200}
                             />
